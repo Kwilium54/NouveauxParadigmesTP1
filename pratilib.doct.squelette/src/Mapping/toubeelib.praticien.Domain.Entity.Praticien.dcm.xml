@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+    https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="toubeelib\praticien\Domain\Entity\Praticien" table="praticien" repository-class="toubeelib\praticien\Repository\PraticienRepository">
+        <id name="id" type="guid" column="id">
+            <generator strategy="NONE"/>
+        </id>
+        <field name="nom" column="nom" type="string" length="48"/>
+        <field name="prenom" column="prenom" type="string" length="48"/>
+        <field name="ville" column="ville" type="string" length="48"/>
+        <field name="email" column="email" type="string" length="128"/>
+        <field name="telephone" column="telephone" type="string" length="24"/>
+        <field name="specialiteId" column="specialite_id" type="integer"/>
+        <field name="structureId" column="structure_id" type="guid" nullable="true"/>
+        
+        <many-to-one field="specialite" target-entity="Specialite">
+            <join-column name="specialite_id" referenced-column-name="id"/>
+        </many-to-one>
+        
+        <many-to-one field="structure" target-entity="Structure">
+            <join-column name="structure_id" referenced-column-name="id"/>
+        </many-to-one>
+        
+        <many-to-many field="motifsVisite" target-entity="MotifVisite">
+            <join-table name="praticien2motif">
+                <join-columns>
+                    <join-column name="praticien_id" referenced-column-name="id"/>
+                </join-columns>
+                <inverse-join-columns>
+                    <join-column name="motif_id" referenced-column-name="id"/>
+                </inverse-join-columns>
+            </join-table>
+        </many-to-many>
+        
+        <many-to-many field="moyensPaiement" target-entity="MoyenPaiement">
+            <join-table name="praticien2moyen">
+                <join-columns>
+                    <join-column name="praticien_id" referenced-column-name="id"/>
+                </join-columns>
+                <inverse-join-columns>
+                    <join-column name="moyen_id" referenced-column-name="id"/>
+                </inverse-join-columns>
+            </join-table>
+        </many-to-many>
+    </entity>
+</doctrine-mapping>

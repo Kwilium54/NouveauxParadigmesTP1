@@ -1,0 +1,420 @@
+<?php
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../src/Infr/Persistence/bootstrap.php';
+
+use toubeelib\praticien\Domain\Entity\Specialite;
+use toubeelib\praticien\Domain\Entity\Praticien;
+use toubeelib\praticien\Domain\Entity\Structure;
+use toubeelib\praticien\Domain\Entity\MotifVisite;
+
+echo "<h1>Exercices Doctrine ORM</h1>";
+
+// ========================================================
+// EXERCICE 1 : UTILISATION ELEMENTAIRE
+// ========================================================
+
+// ========== Question 1 ==========
+echo "<hr><h2>Question 1 : Spécialité d'identifiant 1</h2>";
+$specialite = $entityManager->find(Specialite::class, 1);
+if ($specialite) {
+    echo "<strong>ID :</strong> " . htmlspecialchars($specialite->getId()) . "<br>";
+    echo "<strong>Libellé :</strong> " . htmlspecialchars($specialite->getLibelle()) . "<br>";
+    echo "<strong>Description :</strong> " . htmlspecialchars($specialite->getDescription()) . "<br>";
+} else {
+    echo "Spécialité non trouvée.";
+}
+
+// ========== Question 2 ==========
+echo "<hr><h2>Question 2 : Praticien 8ae1400f-d46d-3b50-b356-269f776be532</h2>";
+$praticien = $entityManager->find(Praticien::class, '8ae1400f-d46d-3b50-b356-269f776be532');
+if ($praticien) {
+    echo "<strong>ID :</strong> " . htmlspecialchars($praticien->getId()) . "<br>";
+    echo "<strong>Nom :</strong> " . htmlspecialchars($praticien->getNom()) . "<br>";
+    echo "<strong>Prénom :</strong> " . htmlspecialchars($praticien->getPrenom()) . "<br>";
+    echo "<strong>Ville :</strong> " . htmlspecialchars($praticien->getVille()) . "<br>";
+    echo "<strong>Email :</strong> " . htmlspecialchars($praticien->getEmail()) . "<br>";
+    echo "<strong>Téléphone :</strong> " . htmlspecialchars($praticien->getTelephone()) . "<br>";
+} else {
+    echo "Praticien non trouvé.";
+}
+
+// ========== Question 3 ==========
+echo "<hr><h2>Question 3 : Praticien avec spécialité et structure</h2>";
+$praticien = $entityManager->find(Praticien::class, '8ae1400f-d46d-3b50-b356-269f776be532');
+if ($praticien) {
+    echo "<strong>Nom :</strong> " . htmlspecialchars($praticien->getNom()) . " " . htmlspecialchars($praticien->getPrenom()) . "<br>";
+    
+    if ($praticien->getSpecialite()) {
+        echo "<h3>Spécialité</h3>";
+        echo "<strong>Libellé :</strong> " . htmlspecialchars($praticien->getSpecialite()->getLibelle()) . "<br>";
+        echo "<strong>Description :</strong> " . htmlspecialchars($praticien->getSpecialite()->getDescription()) . "<br>";
+    }
+    
+    if ($praticien->getStructure()) {
+        echo "<h3>Structure</h3>";
+        echo "<strong>Nom :</strong> " . htmlspecialchars($praticien->getStructure()->getNom()) . "<br>";
+        echo "<strong>Adresse :</strong> " . htmlspecialchars($praticien->getStructure()->getAdresse()) . "<br>";
+        echo "<strong>Ville :</strong> " . htmlspecialchars($praticien->getStructure()->getVille()) . "<br>";
+    }
+}
+
+// ========== Question 4 ==========
+echo "<hr><h2>Question 4 : Structure avec liste de praticiens</h2>";
+$structure = $entityManager->find(Structure::class, '3444bdd2-8783-3aed-9a5e-4d298d2a2d7c');
+if ($structure) {
+    echo "<strong>Nom :</strong> " . htmlspecialchars($structure->getNom()) . "<br>";
+    echo "<strong>Adresse :</strong> " . htmlspecialchars($structure->getAdresse()) . "<br>";
+    echo "<strong>Ville :</strong> " . htmlspecialchars($structure->getVille()) . "<br>";
+    
+    echo "<h3>Praticiens</h3>";
+    echo "<ul>";
+    foreach ($structure->getPraticiens() as $p) {
+        echo "<li>" . htmlspecialchars($p->getPrenom() . " " . $p->getNom()) . " - " . htmlspecialchars($p->getEmail()) . "</li>";
+    }
+    echo "</ul>";
+}
+
+// ========== Question 5 ==========
+echo "<hr><h2>Question 5 : Spécialité 1 et motifs de visite associés</h2>";
+$specialite = $entityManager->find(Specialite::class, 1);
+if ($specialite) {
+    echo "<strong>Libellé :</strong> " . htmlspecialchars($specialite->getLibelle()) . "<br>";
+    echo "<strong>Description :</strong> " . htmlspecialchars($specialite->getDescription()) . "<br>";
+    
+    echo "<h3>Motifs de visite</h3>";
+    $motifs = $entityManager->getRepository(MotifVisite::class)->findBy(['specialiteId' => 1]);
+    echo "<ul>";
+    foreach ($motifs as $motif) {
+        echo "<li>" . htmlspecialchars($motif->getLibelle()) . "</li>";
+    }
+    echo "</ul>";
+}
+
+// ========== Question 6 ==========
+echo "<hr><h2>Question 6 : Praticien et ses motifs de visite</h2>";
+$praticien = $entityManager->find(Praticien::class, '8ae1400f-d46d-3b50-b356-269f776be532');
+if ($praticien) {
+    echo "<strong>Nom :</strong> " . htmlspecialchars($praticien->getNom()) . " " . htmlspecialchars($praticien->getPrenom()) . "<br>";
+    
+    echo "<h3>Motifs de visite</h3>";
+    echo "<ul>";
+    foreach ($praticien->getMotifsVisite() as $motif) {
+        echo "<li>" . htmlspecialchars($motif->getLibelle()) . "</li>";
+    }
+    echo "</ul>";
+}
+
+// ========== Question 7 : Créer un praticien ==========
+echo "<hr><h2>Question 7 : Créer un nouveau praticien</h2>";
+$nouveauPraticienId = '11111111-2222-3333-4444-555555555555';
+$praticienExistant = $entityManager->find(Praticien::class, $nouveauPraticienId);
+
+if (!$praticienExistant) {
+    // spécialité pédiatrie id=3
+    $specialitePediatrie = $entityManager->find(Specialite::class, 3);
+    $nouveauPraticien = new Praticien();
+    $reflection = new ReflectionClass($nouveauPraticien);
+    
+    $idProp = $reflection->getProperty('id');
+    $idProp->setAccessible(true);
+    $idProp->setValue($nouveauPraticien, $nouveauPraticienId);
+    
+    $nomProp = $reflection->getProperty('nom');
+    $nomProp->setAccessible(true);
+    $nomProp->setValue($nouveauPraticien, 'Dupont');
+    
+    $prenomProp = $reflection->getProperty('prenom');
+    $prenomProp->setAccessible(true);
+    $prenomProp->setValue($nouveauPraticien, 'Jean');
+    
+    $villeProp = $reflection->getProperty('ville');
+    $villeProp->setAccessible(true);
+    $villeProp->setValue($nouveauPraticien, 'Nancy');
+    
+    $emailProp = $reflection->getProperty('email');
+    $emailProp->setAccessible(true);
+    $emailProp->setValue($nouveauPraticien, 'jean.dupont@example.com');
+    
+    $telProp = $reflection->getProperty('telephone');
+    $telProp->setAccessible(true);
+    $telProp->setValue($nouveauPraticien, '06 12 34 56 78');
+    
+    $specIdProp = $reflection->getProperty('specialiteId');
+    $specIdProp->setAccessible(true);
+    $specIdProp->setValue($nouveauPraticien, 3);
+    
+    $specProp = $reflection->getProperty('specialite');
+    $specProp->setAccessible(true);
+    $specProp->setValue($nouveauPraticien, $specialitePediatrie);
+    
+    // Persister et sauvegarder
+    $entityManager->persist($nouveauPraticien);
+    $entityManager->flush();
+    
+    echo "<strong>Praticien créé</strong><br>";
+    echo "ID: " . htmlspecialchars($nouveauPraticien->getId()) . "<br>";
+    echo "Nom: " . htmlspecialchars($nouveauPraticien->getNom()) . " " . htmlspecialchars($nouveauPraticien->getPrenom()) . "<br>";
+    echo "Spécialité: " . htmlspecialchars($nouveauPraticien->getSpecialite()->getLibelle()) . "<br>";
+} else {
+    echo "Le praticien test existe déjà (créé précédemment)<br>";
+    echo "Nom: " . htmlspecialchars($praticienExistant->getNom()) . " " . htmlspecialchars($praticienExistant->getPrenom()) . "<br>";
+}
+
+// ========== Question 8 : Modifier le praticien ==========
+echo "<hr><h2>Question 8 : Modifier le praticien</h2>";
+
+$praticienAModifier = $entityManager->find(Praticien::class, $nouveauPraticienId);
+if ($praticienAModifier) {
+    echo "<h3>Avant modification :</h3>";
+    echo "Ville: " . htmlspecialchars($praticienAModifier->getVille()) . "<br>";
+    
+    // Vérif si la structure est définie avec réflexion
+    $reflectionCheck = new ReflectionClass($praticienAModifier);
+    $structurePropCheck = $reflectionCheck->getProperty('structure');
+    $structurePropCheck->setAccessible(true);
+    $structureValue = $structurePropCheck->isInitialized($praticienAModifier) ? $structurePropCheck->getValue($praticienAModifier) : null;
+    
+    echo "Structure: " . ($structureValue ? htmlspecialchars($structureValue->getNom()) : "Aucune") . "<br>";
+    
+    // Vérif si motifsVisite est initialisé
+    $motifsPropCheck = $reflectionCheck->getProperty('motifsVisite');
+    $motifsPropCheck->setAccessible(true);
+    $motifsValue = $motifsPropCheck->isInitialized($praticienAModifier) ? $motifsPropCheck->getValue($praticienAModifier) : null;
+    $nbMotifs = $motifsValue ? count($motifsValue) : 0;
+    
+    echo "Nombre de motifs: " . $nbMotifs . "<br>";
+    
+    $cabinetBigot = $entityManager->find(Structure::class, '3444bdd2-8783-3aed-9a5e-4d298d2a2d7c');
+    $motifs = $entityManager->getRepository(MotifVisite::class)->findBy(['specialiteId' => 3], null, 2);
+    $reflection = new ReflectionClass($praticienAModifier);
+    
+    $villeProp = $reflection->getProperty('ville');
+    $villeProp->setAccessible(true);
+    $villeProp->setValue($praticienAModifier, 'Paris');
+    
+    $structureProp = $reflection->getProperty('structure');
+    $structureProp->setAccessible(true);
+    $structureProp->setValue($praticienAModifier, $cabinetBigot);
+    
+    $structureIdProp = $reflection->getProperty('structureId');
+    $structureIdProp->setAccessible(true);
+    $structureIdProp->setValue($praticienAModifier, '3444bdd2-8783-3aed-9a5e-4d298d2a2d7c');
+    
+    $motifsVisiteProp = $reflection->getProperty('motifsVisite');
+    $motifsVisiteProp->setAccessible(true);
+    $collection = new \Doctrine\Common\Collections\ArrayCollection($motifs);
+    $motifsVisiteProp->setValue($praticienAModifier, $collection);
+    
+    $entityManager->flush();
+    
+    echo "<strong>Praticien modifié</strong><br>";
+    
+    echo "<h3>Après modification :</h3>";
+    echo "Ville: " . htmlspecialchars($praticienAModifier->getVille()) . "<br>";
+    echo "Structure: " . htmlspecialchars($praticienAModifier->getStructure()->getNom()) . "<br>";
+    echo "Motifs de visite: <ul>";
+    foreach ($praticienAModifier->getMotifsVisite() as $motif) {
+        echo "<li>" . htmlspecialchars($motif->getLibelle()) . "</li>";
+    }
+    echo "</ul>";
+}
+
+// ========== Question 9 : Supprimer le praticien ==========
+echo "<hr><h2>Question 9 : Supprimer le praticien</h2>";
+
+$praticienASupprimer = $entityManager->find(Praticien::class, $nouveauPraticienId);
+if ($praticienASupprimer) {
+    echo "<h3>Avant suppression :</h3>";
+    echo "Praticien trouvé: " . htmlspecialchars($praticienASupprimer->getNom()) . " " . htmlspecialchars($praticienASupprimer->getPrenom()) . "<br>";
+    
+    $entityManager->remove($praticienASupprimer);
+    $entityManager->flush();
+    
+    echo "<strong>Praticien supprimé avec succès !</strong><br>";
+    
+    // Vider le cache Doctrine car sinon il retrouve l'entité en cache
+    $entityManager->clear(); 
+    $verification = $entityManager->find(Praticien::class, $nouveauPraticienId);
+    
+    echo "<h3>Après suppression :</h3>";
+    if ($verification === null) {
+        echo "Le praticien n'existe plus dans la base de données<br>";
+    } else {
+        echo "Erreur : le praticien existe encore<br>";
+    }
+} else {
+    echo "Le praticien n'existe pas (déjà supprimé ou non créé)<br>";
+}
+
+// ========================================================
+// EXERCICE 2 : REQUETES AVEC CONDITIONS
+// ========================================================
+
+// ========== Question 1 : Praticien par email ==========
+echo "<hr><h2>Exercice 2 - Question 1 : Praticien avec email Gabrielle.Klein@live.com</h2>";
+$praticienParEmail = $entityManager->getRepository(Praticien::class)
+    ->findOneBy(['email' => 'Gabrielle.Klein@live.com']);
+
+if ($praticienParEmail) {
+    echo "<strong>Nom :</strong> " . htmlspecialchars($praticienParEmail->getNom()) . " " . htmlspecialchars($praticienParEmail->getPrenom()) . "<br>";
+    echo "<strong>Email :</strong> " . htmlspecialchars($praticienParEmail->getEmail()) . "<br>";
+    echo "<strong>Ville :</strong> " . htmlspecialchars($praticienParEmail->getVille()) . "<br>";
+    echo "<strong>Spécialité :</strong> " . htmlspecialchars($praticienParEmail->getSpecialite()->getLibelle()) . "<br>";
+} else {
+    echo "Aucun praticien trouvé avec cet email<br>";
+}
+
+// ========== Question 2 : Praticien Goncalves à Paris ==========
+echo "<hr><h2>Exercice 2 - Question 2 : Praticien Goncalves à Paris</h2>";
+$praticienGoncalves = $entityManager->getRepository(Praticien::class)
+    ->findOneBy(['nom' => 'Goncalves', 'ville' => 'Paris']);
+
+if ($praticienGoncalves) {
+    echo "<strong>Nom :</strong> " . htmlspecialchars($praticienGoncalves->getNom()) . " " . htmlspecialchars($praticienGoncalves->getPrenom()) . "<br>";
+    echo "<strong>Ville :</strong> " . htmlspecialchars($praticienGoncalves->getVille()) . "<br>";
+    echo "<strong>Email :</strong> " . htmlspecialchars($praticienGoncalves->getEmail()) . "<br>";
+    echo "<strong>Téléphone :</strong> " . htmlspecialchars($praticienGoncalves->getTelephone()) . "<br>";
+} else {
+    echo "Aucun praticien Goncalves trouvé à Paris<br>";
+}
+
+// ========== Question 3 : Spécialité pédiatrie + praticiens ==========
+echo "<hr><h2>Exercice 2 - Question 3 : Spécialité pédiatrie et ses praticiens</h2>";
+$specialitePediatrie = $entityManager->getRepository(Specialite::class)
+    ->findOneBy(['libelle' => 'pédiatrie']);
+
+if ($specialitePediatrie) {
+    echo "<strong>Spécialité :</strong> " . htmlspecialchars($specialitePediatrie->getLibelle()) . "<br>";
+    echo "<strong>Description :</strong> " . htmlspecialchars($specialitePediatrie->getDescription() ?? 'N/A') . "<br>";
+    
+    $praticiensPediatrie = $entityManager->getRepository(Praticien::class)
+        ->findBy(['specialiteId' => $specialitePediatrie->getId()]);
+    
+    echo "<h3>Praticiens associés (" . count($praticiensPediatrie) . ") :</h3>";
+    echo "<ul>";
+    foreach ($praticiensPediatrie as $prat) {
+        echo "<li>" . htmlspecialchars($prat->getNom()) . " " . htmlspecialchars($prat->getPrenom()) . " - " . htmlspecialchars($prat->getVille()) . "</li>";
+    }
+    echo "</ul>";
+} else {
+    echo "Spécialité pédiatrie non trouvée<br>";
+}
+
+// ========== Question 4 : Structures avec santé ==========
+echo "<hr><h2>Exercice 2 - Question 4 : Structures contenant 'santé' dans la description</h2>";
+
+use Doctrine\Common\Collections\Criteria;
+
+$repository = $entityManager->getRepository(Structure::class);
+$criteria = Criteria::create()
+    ->where(Criteria::expr()->contains('nom', 'santé'))
+    ->orWhere(Criteria::expr()->contains('nom', 'Santé'));
+
+$structuresSante = $repository->matching($criteria);
+
+if (count($structuresSante) > 0) {
+    echo "<strong>Structures trouvées :</strong> " . count($structuresSante) . "<br><ul>";
+    foreach ($structuresSante as $structure) {
+        echo "<li><strong>" . htmlspecialchars($structure->getNom()) . "</strong><br>";
+        echo "Adresse : " . htmlspecialchars($structure->getAdresse()) . "<br>";
+        echo "Ville : " . htmlspecialchars($structure->getVille()) . "</li>";
+    }
+    echo "</ul>";
+} else {
+    echo "Aucune structure contenant 'santé' trouvée<br>";
+}
+
+// ========== Question 5 : Praticiens ophtalmologie à Paris (requête critères) ==========
+echo "<hr><h2>Exercice 2 - Question 5 : Praticiens ophtalmologie exerçant à Paris</h2>";
+
+$specialiteOphtalmo = $entityManager->getRepository(Specialite::class)
+    ->findOneBy(['libelle' => 'ophtalmologie']);
+
+if ($specialiteOphtalmo) {
+    $repositoryPraticiens = $entityManager->getRepository(Praticien::class);
+    $criteriaPraticiens = Criteria::create()
+        ->where(Criteria::expr()->eq('ville', 'Paris'))
+        ->andWhere(Criteria::expr()->eq('specialiteId', $specialiteOphtalmo->getId()));
+    
+    $praticiensOphtalmo = $repositoryPraticiens->matching($criteriaPraticiens);
+    
+    if (count($praticiensOphtalmo) > 0) {
+        echo "<strong>Praticiens trouvés :</strong> " . count($praticiensOphtalmo) . "<br><ul>";
+        foreach ($praticiensOphtalmo as $prat) {
+            echo "<li>" . htmlspecialchars($prat->getNom()) . " " . htmlspecialchars($prat->getPrenom()) . "<br>";
+            echo "Email : " . htmlspecialchars($prat->getEmail()) . "<br>";
+            echo "Téléphone : " . htmlspecialchars($prat->getTelephone()) . "</li>";
+        }
+        echo "</ul>";
+    } else {
+        echo "Aucun praticien ophtalmologie trouvé à Paris<br>";
+    }
+} else {
+    echo "Spécialité ophtalmologie non trouvée<br>";
+}
+
+// ========================================================
+// EXERCICE 3 : REPOSITORY ET DQL
+// ========================================================
+
+// ========== Question 1 : Spécialités contenant un mot-clé ==========
+echo "<hr><h2>Exercice 3 - Question 1 : Spécialités contenant 'Imagerie' (DQL)</h2>";
+
+$specialiteRepo = $entityManager->getRepository(Specialite::class);
+$specialitesCardio = $specialiteRepo->findByKeyword('Imagerie');
+
+if (count($specialitesCardio) > 0) {
+    echo "<strong>Spécialités trouvées :</strong> " . count($specialitesCardio) . "<br><ul>";
+    foreach ($specialitesCardio as $spec) {
+        echo "<li><strong>" . htmlspecialchars($spec->getLibelle()) . "</strong><br>";
+        echo "Description : " . htmlspecialchars($spec->getDescription() ?? 'N/A') . "</li>";
+    }
+    echo "</ul>";
+} else {
+    echo "Aucune spécialité contenant 'Imagerie' trouvée<br>";
+}
+
+// ========== Question 2 : Praticiens dont la spécialité contient un mot-clé ==========
+echo "<hr><h2>Exercice 3 - Question 2 : Praticiens de spécialités contenant 'ologie' (DQL)</h2>";
+
+$praticienRepo = $entityManager->getRepository(Praticien::class);
+$praticiensOlogie = $praticienRepo->findBySpecialiteKeyword('ologie');
+
+if (count($praticiensOlogie) > 0) {
+    echo "<strong>Praticiens trouvés :</strong> " . count($praticiensOlogie) . "<br><ul>";
+    foreach ($praticiensOlogie as $prat) {
+        echo "<li>" . htmlspecialchars($prat->getNom()) . " " . htmlspecialchars($prat->getPrenom());
+        echo " - Spécialité : " . htmlspecialchars($prat->getSpecialite()->getLibelle());
+        echo " - Ville : " . htmlspecialchars($prat->getVille()) . "</li>";
+    }
+    echo "</ul>";
+} else {
+    echo "Aucun praticien trouvé<br>";
+}
+
+// ========== Question 3 : Praticiens d'une spécialité acceptant un moyen de paiement ==========
+echo "<hr><h2>Exercice 3 - Question 3 : Praticiens de pédiatrie acceptant 'carte bancaire' (DQL)</h2>";
+
+$specialitePediatrie = $entityManager->getRepository(Specialite::class)
+    ->findOneBy(['libelle' => 'pédiatrie']);
+
+if ($specialitePediatrie) {
+    $praticiensCB = $praticienRepo->findBySpecialiteAndPayment(
+        $specialitePediatrie->getId(),
+        'carte bancaire'
+    );
+    
+    if (count($praticiensCB) > 0) {
+        echo "<strong>Praticiens trouvés :</strong> " . count($praticiensCB) . "<br><ul>";
+        foreach ($praticiensCB as $prat) {
+            echo "<li>" . htmlspecialchars($prat->getNom()) . " " . htmlspecialchars($prat->getPrenom());
+            echo " - Ville : " . htmlspecialchars($prat->getVille());
+            echo " - Email : " . htmlspecialchars($prat->getEmail()) . "</li>";
+        }
+        echo "</ul>";
+    } else {
+        echo "Aucun praticien pédiatre acceptant la carte bancaire trouvé<br>";
+    }
+} else {
+    echo "Spécialité pédiatrie non trouvée<br>";
+}
